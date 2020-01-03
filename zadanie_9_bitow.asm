@@ -9,7 +9,6 @@ start:          mov     ax,dane
                 mov     sp,offset szczyt
 				poczatek:
 					mov si, 0
-					xor bx, bx;niepotrzebne zerowanie
 					lea dx, poczatkowa_wiad
 					mov ah, 9
 					int 21h
@@ -103,11 +102,9 @@ start:          mov     ax,dane
 					jmp wczytywanie
 				koniec1:
 					mov ax, si
-					mov dx,0;trzeba sie zasanowic czy ten warunek jest wgl potrzebny
-					cmp ax,dx;niepotrzebny drugi rejestr
-					js info_error
-					mov dx,129
-					cmp ax,dx
+					;cmp ax,0
+					;js info_error
+					cmp ax,129
 					jns info_error
 					cmp ax,128
 					je sprawdzanie_znaku
