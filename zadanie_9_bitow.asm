@@ -33,13 +33,24 @@ start:          mov     ax,dane
 					mov dl,enterr
 					mov ah,02H
 					int 21h
+					lea dx, wypisz_info_zm
+					mov ah, 9
+					int 21h
 					call wypisywanie_bin
 					mov dl,enterr
 					mov ah,02H
 					int 21h
+					;cmp cyfry,0
+					;je jesli_minus_zero
+					lea dx, wypisz_info_zu1
+					mov ah, 9
+					int 21h
 					call wypisywanie_ZU1
 					mov dl,enterr
 					mov ah,02H
+					int 21h
+					lea dx, wypisz_info_zu2
+					mov ah, 9
 					int 21h
 					call wypisywanie_ZU2
 					mov ah, 4ch
@@ -53,13 +64,25 @@ start:          mov     ax,dane
 					mov dl,enterr
 					mov ah,02H
 					int 21h
-					call wypisywanie_bin
-					mov dl,enterr
-					mov ah,02H
+					lea dx, wypisz_info_zm
+					mov ah, 9
 					int 21h
 					call wypisywanie_bin
 					mov dl,enterr
 					mov ah,02H
+					int 21h
+					jesli_minus_zero:
+					;cmp cyfry,0
+					;call zmiana_znaku
+					lea dx, wypisz_info_zu1
+					mov ah, 9
+					int 21h
+					call wypisywanie_bin
+					mov dl,enterr
+					mov ah,02H
+					int 21h
+					lea dx, wypisz_info_zu2
+					mov ah, 9
 					int 21h
 					call wypisywanie_bin
 					mov ah, 4ch
@@ -91,6 +114,9 @@ start:          mov     ax,dane
 				powrot:
 					mov cyfry, al
 					mov cx,4
+					lea dx, wypisz_info_hex
+					mov ah, 9
+					int 21h
 					xor dx,dx
 				wypisywanie_hex:
 					mov dl,cyfry
@@ -113,7 +139,7 @@ start:          mov     ax,dane
 					call poczatek
 				sprawdzanie_znaku:
 					cmp znak,31H
-					je zly_znak
+					jne zly_znak
 					jmp powrot
 				zly_znak:
 					lea dx, wiad_znak
@@ -148,6 +174,9 @@ start:          mov     ax,dane
 					add cyfry,1
 					call wypisywanie_bin
 					ret
+				zmiana_znaku:
+					mov znak,30H
+					ret
 					;problem z minus zerem, trzeba zrobic warunek albo cos innego wymyslic
 Progr           ends ;kończy obszar danego segmentu logicznego
 
@@ -157,7 +186,11 @@ dane            segment
 	   wiad_dla_dod db 10,13,"Wpisz liczbe dla obliczen dodatnich:$"
 	   wiad_dla_min db 10,13,"Wpisz liczbe dla obliczen minusowych:$"
 	   wiad_error db 10,13,"Wpisales zla wartosc$"
-	   wiad_znak db 10,13,"Nie mozesz wpisac -128$"
+	   wiad_znak db 10,13,"Nie mozesz wpisac 128$"
+	   wypisz_info_hex db 10,13,"Twoja liczba hexadecymalnie: $"
+	   wypisz_info_zm db 10,13,"Twoja liczba w ZM: $"
+	   wypisz_info_zu1 db 10,13,"Twoja liczba w ZU1: $"
+	   wypisz_info_zu2 db 10,13,"Twoja liczba w ZU2: $"
 	   cyfry db 0
 	   znak db 0
 	   enterr db 10,13
