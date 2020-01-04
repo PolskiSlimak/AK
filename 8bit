@@ -22,6 +22,7 @@ start:          mov     ax,dane ;inicjalizujemy segmenty logiczne, do ax przesy�
 					mov ah, 1 ;kod obsługi przerwania 21, który pobiera znak i przesyła go do al(?)
 					int 21H 
 					mov znak,al ;przesyłamy kod ascii pobranego znaku do zmiennej(?) znak
+					mov cl,3
 					cmp al,2DH ;sprawdzamy czy został pobrany minus...
 					je liczba_minusowa
 					cmp al,2BH ;...czy plus
@@ -110,7 +111,7 @@ start:          mov     ax,dane ;inicjalizujemy segmenty logiczne, do ax przesy�
 					       ;żeby kolejną cyfrę dodać na mniej znaczącą pozycję
 					add ax, bx ;dodajemy naszą cyfrę do wyniku mnożenia (w pierwszej iteracji do 0)
 					mov si, ax ;przesyłamy wynik do si
-					jmp wczytywanie
+					loop wczytywanie
 				koniec1:
 					mov ax, si ;przesyłamy otrzymaną do liczbę do ax
 					;cmp ax,0 ;możemy sprawdzić czy nie został wpisany jakiś znak, który jest niżej niż 0
