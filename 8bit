@@ -1,31 +1,39 @@
 Progr           segment ;dyrektywa służąca do deklaracji segmentów logicznych
-                assume  cs:Progr, ds:dane, ss:stosik ;asume - przypisuje etykietę do (części) wskazanego rejestru segmentowego (segment logiczny), 
-													 ;nie zmiania zawartości rejestrów segmentowych, dlatego trzeba ustawić ich wartości samemu.
-													 ;Dzięki assume można używać offsetu
-start:          mov     ax,dane
-                mov     ds,ax
+                assume  cs:Progr, ds:dane, ss:stosik ;asume - przypisuje etykietę do (części) wskazanego rejestru segmentowego 
+						      (segment logiczny), 
+						     ;nie zmiania zawartości rejestrów segmentowych, dlatego trzeba ustawić 
+						      ich wartości samemu.
+						     ;Dzięki assume można używać offsetu
+start:          mov     ax,dane ;inicjalizujemy segmenty logiczne, do ax przesyłamy adres pierwszej komórki segmentu logicznego dane
+				;start jest etykietą, która wskazuje gdzie zaczyna się nasz program, end jest dyrektywą, 
+				 która pokazuje gdzie się kończy
+				;start musi być w progr, bo asembler nie wie czym jest start jesli kod nie jest w code segment
+                mov     ds,ax ;przenosimy do ds, bo nie możemy przesyłać bezpośrednio do segmentów wartości i adresów
                 mov     ax,stosik
                 mov     ss,ax
-                mov     sp,offset szczyt
+                mov     sp,offset szczyt ;offset od początku stosiku to szczytu, offset to adres względny 
+                                ;poczatek programu
 				poczatek:
-					mov si, 0
-					lea dx, poczatkowa_wiad
-					mov ah, 9
-					int 21h
-					mov ah, 1
-					int 21H
-					mov znak,al
-					cmp al,2DH
+					mov si, 0 ;zerujemy source index	
+					lea dx, poczatkowa_wiad ;rozkaz LEA załadowuje adres efektywny
+								;LEA ładuje adres, MOV ładuje wartość
+					mov ah, 9 ;kod obsługi przerwania 21, który wyświetla tekst z dx
+					int 21h ;przerwanie 21 wywołuje funkcję systemową, która jest w ah
+					mov ah, 1 ;kod obsługi przerwania 21, który pobiera znak i przesyła go do al(?)
+					int 21H 
+					mov znak,al ;przesyłamy kod ascii pobranego znaku do zmiennej(?) znak
+					cmp al,2DH ;sprawdzamy czy został pobrany minus...
 					je liczba_minusowa
-					cmp al,2BH
+					cmp al,2BH ;...czy plus
 					je liczba_dodatnia
-					lea dx, error
+					lea dx, error ;jeśli nie minus i nie plus to przesyłamy do dx adres komórki od której są
+						      ;zapisane litery (ich kody ascii) komunikatu błędu
 					mov ah, 9
 					int 21h
 					jmp poczatek
 				liczba_minusowa:
-					mov znak,31H
-					lea dx, wiad_dla_min
+					mov znak,31H ;przesyłamy 1 dec do znaku
+					lea dx, wiad_dla_min 
 					mov ah, 9
 					int 21h
 					call wczytywanie
@@ -88,33 +96,38 @@ start:          mov     ax,dane
 					int 21h
 				wczytywanie:
 					mov ah, 1
-					int 21H
-					cmp al, 13
-					je koniec1
-					sub al, 30H 
-					cmp al, 10
-					jns info_error
-					mov bl, al
-					mov ax, 10
-					mul si
-					add ax, bx
-					mov si, ax
+					int 21H ;pobieramy znak od użytkownika
+					cmp al, 13 ;sprawdzamy czy nie został wpisany enter
+					je koniec1 ;jeśli equals to koniec
+					sub al, 30H ;odejmujemy od pobranego znaku 30h żeby otrzymać liczbę dec
+					cmp al, 10 ;od otrzymanej liczby odejmujemy 10
+					jns info_error ;jeśli wynik jest >10 to znaczy, że został pobrany znak nie z zakresu 0-9,
+						       ;wtedy s=0 i error
+					mov bl, al ;przesyłamy naszą cyfrę do bl
+					mov ax, 10 ;do ax przesyłamy 10
+					mul si ;to samo co 'mul ax, si', ax=ax*si
+					       ;mnożymy cyfrę otrzymaną w poprzedniej iteracji razy 10
+					       ;żeby kolejną cyfrę dodać na mniej znaczącą pozycję
+					add ax, bx ;dodajemy naszą cyfrę do wyniku mnożenia (w pierwszej iteracji do 0)
+					mov si, ax ;przesyłamy wynik do si
 					jmp wczytywanie
 				koniec1:
-					mov ax, si
-					;cmp ax,0
+					mov ax, si ;przesyłamy otrzymaną do liczbę do ax
+					;cmp ax,0 ;możemy sprawdzić czy nie został wpisany jakiś znak, który jest niżej niż 0
 					;js info_error
-					cmp ax,129
+					cmp ax,129 ;sprawdzamy czy nie jest większa od 129
 					jns info_error
-					cmp ax,128
-					je sprawdzanie_znaku
+					cmp ax,128 ;sprawdzamy czy jest to 128
+					je sprawdzanie_znaku ;jeśli tak to sprawdzamy jaki był znak, bo nie może być +128
+							     ;bo nie może być +128, ale może być -128
 				powrot:
-					mov cyfry, al
-					mov cx,4
+					mov cyfry, al ;przesyłamy naszą liczbę do zmiennej(?) al, wystarczy tylko do al, bo mamy pewność
+						      ;że nie zajmuje więcej niż 8 bitów
+					mov cx,4 
 					lea dx, wypisz_info_hex
 					mov ah, 9
-					int 21h
-					xor dx,dx
+					int 21h ;wypisuje wszystkie chary które zaczynają się od komórki, której adres jest w dx?
+					xor dx,dx ;zerujemy dx
 				wypisywanie_hex:
 					mov dl,cyfry
 					shr dl,cl;dokladne dzialanie shra trzeba ogarnac
@@ -135,9 +148,9 @@ start:          mov     ax,dane
 					int 21h
 					call poczatek
 				sprawdzanie_znaku:
-					cmp znak,31H
-					jne zly_znak
-					jmp powrot
+					cmp znak,31H ;sprawdzamy czy znak to minus (tu nie powinno być 2DH zamiast 31H?)
+					jne zly_znak ;jeśli to nie był minus to liczba +128 jest poza przedziałem
+					jmp powrot ;jeśli to był minus to lecimy dalej z -128
 				zly_znak:
 					lea dx, wiad_znak
 					mov ah, 9
