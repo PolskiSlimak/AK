@@ -38,8 +38,9 @@ start:          mov     ax,dane ;inicjalizujemy segmenty logiczne, do ax przesy�
 					mov ah, 9
 					int 21h
 					call wczytywanie
-					mov dl,enterr
-					mov ah,02H
+					mov dl,enterr ;do dl enterr, czyli 10 - line feed i 13 - carrage return
+						      ;czemu tutaj możemy dwa kody po przecinku? i czemu tylko do dl, a nie dx?
+					mov ah,02H ;'wypisujemy' tego enterra
 					int 21h
 					lea dx, wypisz_info_zm
 					mov ah, 9
@@ -122,26 +123,33 @@ start:          mov     ax,dane ;inicjalizujemy segmenty logiczne, do ax przesy�
 					je sprawdzanie_znaku ;jeśli tak to sprawdzamy jaki był znak, bo nie może być +128
 							     ;bo nie może być +128, ale może być -128
 				powrot:
-					mov cyfry, al ;przesyłamy naszą liczbę do zmiennej(?) al, wystarczy tylko do al, bo mamy pewność
-						      ;że nie zajmuje więcej niż 8 bitów
+					mov cyfry, al ;przesyłamy naszą liczbę do zmiennej(?) cyfry, wystarczy tylko do al
+						      ;bo mamy pewność, że nie zajmuje więcej niż 8 bitów
 					mov cx,4 
 					lea dx, wypisz_info_hex
 					mov ah, 9
 					int 21h ;wypisuje wszystkie chary które zaczynają się od komórki, której adres jest w dx?
 					xor dx,dx ;zerujemy dx
 				wypisywanie_hex:
-					mov dl,cyfry
-					shr dl,cl;dokladne dzialanie shra trzeba ogarnac
-					and dl,0FH
-					cmp dl,9
-					jbe wyp
-					add dl,7
+					mov dl,cyfry ;przesyłamy naszą liczbę
+					shr dl,cl ;przesuwa wszystkie bity dl w prawo o ilość bitów zdefiniowaną w cl
+						  ;z lewej strony wchodzą zera?
+					and dl,0FH ;robimy anda z 15, czyli zostają tylko 4 ostatnie bity
+						   ;pierwsze cztery się zerują
+						   ;te 4 ostatnie to te najbardziej znaczące z naszej liczby
+						   ;tylko przesunęliśmy je na koniec
+					cmp dl,9 ;sprawdzamy, czy ta liczba (te 4 bity) jest większa czy mniejsza od 9
+					jbe wyp ;jeśli mniejsza albo równa idziemy do 'wyp'
+					add dl,7 ;jeśli większa, to dodajemy do niej 7, bo tyle jest znaków w ascii 
+						 ;pomiędzy cyframi i literkami
 				wyp:
-					add dl,'0'
-					mov ah,02H;sprawdzic przerwania 
+					add dl,'0' ;do dl 30H
+					mov ah,02H ;sprawdzic przerwania      !!!! 
+						   ;kod obslugi przerwania 21, który wypisuje znak na ekran
 					int 21H
-					sub cx,4
-					jns wypisywanie_hex
+					sub cx,4 ;zerujemy cx, bo nie chcemy już przesuwać shrem, będziemy teraz operować na 4 ostatnich 
+					jns wypisywanie_hex ;jeśli odjęliśmy i jest -4 to znaczy, że to było już po drugiej iteracji
+							    ;więć retujemy
 					ret
 				info_error:
 					lea dx, wiad_error
