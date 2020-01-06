@@ -19,9 +19,9 @@ start:          mov     ax,dane ;inicjalizujemy segmenty logiczne, do ax przesy�
 								;LEA ładuje adres, MOV ładuje wartość
 					mov ah, 9 ;kod obsługi przerwania 21, który wyświetla tekst z dx
 					int 21h ;przerwanie 21 wywołuje funkcję systemową, która jest w ah
-					mov ah, 1 ;kod obsługi przerwania 21, który pobiera znak i przesyła go do al(?)
+					mov ah, 1 ;kod obsługi przerwania 21, który pobiera znak i przesyła go do al
 					int 21H 
-					mov znak,al ;przesyłamy kod ascii pobranego znaku do zmiennej(?) znak
+					mov znak,al ;przesyłamy kod ascii pobranego znaku do zmiennej znak
 					mov cl,3
 					cmp al,2DH ;sprawdzamy czy został pobrany minus...
 					je liczba_minusowa
@@ -38,8 +38,7 @@ start:          mov     ax,dane ;inicjalizujemy segmenty logiczne, do ax przesy�
 					mov ah, 9
 					int 21h
 					call wczytywanie
-					mov dl,enterr ;do dl enterr, czyli 10 - line feed i 13 - carrage return
-						      ;czemu tutaj możemy dwa kody po przecinku? i czemu tylko do dl, a nie dx?
+					mov dx,enterr ;do dl enterr, czyli 10 - line feed i 13 - carrage return
 					mov ah,02H ;'wypisujemy' tego enterra
 					int 21h
 					lea dx, wypisz_info_zm
@@ -55,7 +54,10 @@ start:          mov     ax,dane ;inicjalizujemy segmenty logiczne, do ax przesy�
 					mov ah, 9
 					int 21h
 					call wypisywanie_ZU1
-					mov dl,enterr
+					mov dl,enterr[0];jezeli chcemy movowac tablice bez odwolan do indexow to tak naprawde movujemy 0 jej element
+					mov ah,02H
+					int 21h
+					mov dl,enterr[1]
 					mov ah,02H
 					int 21h
 					lea dx, wypisz_info_zu2
@@ -70,7 +72,10 @@ start:          mov     ax,dane ;inicjalizujemy segmenty logiczne, do ax przesy�
 					mov ah, 9
 					int 21h
 					call wczytywanie
-					mov dl,enterr
+					mov dl,enterr[0];jezeli chcemy movowac tablice bez odwolan do indexow to tak naprawde movujemy 0 jej element
+					mov ah,02H
+					int 21h
+					mov dl,enterr[1]
 					mov ah,02H
 					int 21h
 					lea dx, wypisz_info_zm
@@ -123,17 +128,17 @@ start:          mov     ax,dane ;inicjalizujemy segmenty logiczne, do ax przesy�
 					je sprawdzanie_znaku ;jeśli tak to sprawdzamy jaki był znak, bo nie może być +128
 							     ;bo nie może być +128, ale może być -128
 				powrot:
-					mov cyfry, al ;przesyłamy naszą liczbę do zmiennej(?) cyfry, wystarczy tylko do al
+					mov cyfry, al ;przesyłamy naszą liczbę do zmiennej cyfry, wystarczy tylko do al
 						      ;bo mamy pewność, że nie zajmuje więcej niż 8 bitów
 					mov cx,4 
 					lea dx, wypisz_info_hex
 					mov ah, 9
-					int 21h ;wypisuje wszystkie chary które zaczynają się od komórki, której adres jest w dx?
+					int 21h ;wypisuje wszystkie chary które zaczynają się od komórki, której adres jest w dx
 					xor dx,dx ;zerujemy dx
 				wypisywanie_hex:
 					mov dl,cyfry ;przesyłamy naszą liczbę
 					shr dl,cl ;przesuwa wszystkie bity dl w prawo o ilość bitów zdefiniowaną w cl
-						  ;z lewej strony wchodzą zera?
+						  ;z lewej strony wchodzą zera
 					and dl,0FH ;robimy anda z 15, czyli zostają tylko 4 ostatnie bity
 						   ;pierwsze cztery się zerują
 						   ;te 4 ostatnie to te najbardziej znaczące z naszej liczby
@@ -157,7 +162,7 @@ start:          mov     ax,dane ;inicjalizujemy segmenty logiczne, do ax przesy�
 					int 21h
 					call poczatek
 				sprawdzanie_znaku:
-					cmp znak,31H ;sprawdzamy czy znak to minus (tu nie powinno być 2DH zamiast 31H?)
+					cmp znak,31H ;sprawdzamy czy znak to minus 
 					jne zly_znak ;jeśli to nie był minus to liczba +128 jest poza przedziałem
 					jmp powrot ;jeśli to był minus to lecimy dalej z -128
 				zly_znak:
@@ -203,7 +208,7 @@ Progr           ends ;kończy obszar danego segmentu logicznego
 
 dane            segment
 	   poczatkowa_wiad db 10,13,"Wpisz minus albo plus:$" 
-	   error db 10,13,"Wpisales zly znak. Musisz podac - albo +$"
+	   error db 10,13,"Wpisales zly znak. Musisz podac - albo +$";definiujemy tablice ktora w zaleznosci od ilosci przecinkow posiada tyle indexow
 	   wiad_dla_dod db 10,13,"Wpisz liczbe dla obliczen dodatnich:$"
 	   wiad_dla_min db 10,13,"Wpisz liczbe dla obliczen minusowych:$"
 	   wiad_error db 10,13,"Wpisales zla wartosc$"
