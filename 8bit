@@ -171,14 +171,14 @@ start:          mov     ax,dane ;inicjalizujemy segmenty logiczne, do ax przesy�
 					mov dl,znak
 					mov ah,02H
 					int 21h
-					mov dl,'.'
-					mov ah,02H
-					int 21h	
-					shl bl,1
+					;mov dl,'.'
+					;mov ah,02H
+					;int 21h	
+					shl bl,1 ;przesuwa wszystkie bity bl w lewo o zdefiniowaną ilość bitów 
 				loopBin:
 					xor dx,dx			 
 					shl bl,1			
-					jnc wpisywanie_do_zmiennej			 
+					jnc wpisywanie_do_zmiennej ;skok jeśli nie ma przeniesienia, CF=0			 
 					mov dx,1			
 				wpisywanie_do_zmiennej:	
 					add dx,'0'
@@ -187,7 +187,7 @@ start:          mov     ax,dane ;inicjalizujemy segmenty logiczne, do ax przesy�
 					loop loopBin
 					ret
 				wypisywanie_ZU1:
-					not cyfry;jak dziala not
+					not cyfry ;zamienia 0 na 1 i 1 na 0
 					call wypisywanie_bin
 					ret
 				wypisywanie_ZU2:
@@ -197,11 +197,12 @@ start:          mov     ax,dane ;inicjalizujemy segmenty logiczne, do ax przesy�
 				zmiana_znaku:
 					mov znak,30H
 					ret
-					;+128 problem wyswietla zla wartosc przez to ze uzywamy znaku a nie naszej liczby, waarunek sprawdzajacy liczbe lub cos innego
+					;+128 problem wyswietla zla wartosc przez to ze uzywamy znaku a nie naszej liczby, 
+					;waarunek sprawdzajacy liczbe lub cos innego
 Progr           ends ;kończy obszar danego segmentu logicznego
 
 dane            segment
-	   poczatkowa_wiad db 10,13,"Wpisz minus albo plus:$"
+	   poczatkowa_wiad db 10,13,"Wpisz minus albo plus:$" 
 	   error db 10,13,"Wpisales zly znak. Musisz podac - albo +$"
 	   wiad_dla_dod db 10,13,"Wpisz liczbe dla obliczen dodatnich:$"
 	   wiad_dla_min db 10,13,"Wpisz liczbe dla obliczen minusowych:$"
@@ -219,7 +220,7 @@ dane            ends
 stosik          segment
                 dw 100h dup(0) ;declare word, 256 decymalnie 
 szczyt          Label word  ;dyrektywa label służy do tworzenia etykiet, przyporządkowuje im aktualną wartość adresu
-							;jest ona użyteczna przy nadawaniu zmiennym pamięciowym już nazwanym, innej nazwy z innym kodem
+			    ;jest ona użyteczna przy nadawaniu zmiennym pamięciowym już nazwanym, innej nazwy z innym kodem
 stosik          ends
 
 end start
