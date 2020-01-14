@@ -6,34 +6,38 @@ start:          mov     ax,dane
                 mov     ax,stosik
                 mov     ss,ax
                 mov     sp,offset szczyt
-				mov ax,6200h
+				mov ax,6200h ;kod obsługi przerwania 21h, tworzy program segment prefix w bx, czyli strukturę
+					     ;w DOSie, która przechowuje stan programu (w es)
 				int 21h
-				mov es,bx
+				mov es,bx ;przenosimy adres pierwszego bajtu do es
 				xor si,si
-				mov al,es:[80h]
-				cmp al,2
+				mov al,es:[80h] ;ładujemy bajt 80 komórki do al, jest to bajt, który przechowuje informacje ile jest
+						;bajtów w command line, pamięta ilość znaków wpisanych parametrów
+				cmp al,2 ;sprawdzamy, czy jest więcej niż 1, bo wtedy to jest sama spacja
 				jbe brak_parametru
-				pisz_do_zmiennej:
+					pisz_do_zmiennej:
 				mov al,es:[82h+si]
-				cmp al,0Dh
+				cmp al,0Dh ;sprawdzamy czy nie enter
 				je idz_dalej
-				mov parametry[si],al
+				mov parametry[si],al ;z al znak do tablicy parametry
 				inc si
 				jmp pisz_do_zmiennej
-				idz_dalej:
+					idz_dalej:
 				;lea dx,informacja
 				;call wypisz
-				mov dx,offset parametry
-				mov ax,3D00h
+				mov dx,offset parametry ;do dx adres tablicy parametry (6 komórka ds)
+				mov ax,3D00h ;kod obsługi przerwania 21h, sprawdza czy ciąg parametrów jest plikiem, jeśli plik nie 
+					     ;istnieje to C=1, jeśli istnieje to C=0, tworzy uchwyt (dojście) do plików, który ustawia
+					     ;się na 1 linijce i pokazuje na 1 bajt, wrzuca go do ax
 				int 21h
 				jc brak_parametru
-				mov wskaznik,ax
-				graj:
+				mov wskaznik,ax ;inicjujemy wskaźnik adrsem na który wskazuje ten uchwyt
+					graj:
 				call czytaj_trojki
-				mov dl,trojka[0]
-				cmp dl,'Z'
+				mov dl,trojka[0] ;pierwszy znak do dl
+				cmp dl,'Z';sprawdzamy czy nie z, bo z jest końcem pliku
 				je koniec
-				mov ax,0B00h
+				mov ax,0B00h ;sprawdza czy użytkownik nie wcisnął dowolnego klawisza, jeśli tak to al=1, nie - al=0
 				int 21h
 				cmp al,0
 				jne koniec
@@ -43,27 +47,28 @@ start:          mov     ax,dane
 				lea dx,blad
 				call wypisz
 				call koniec
-				koniec:
-				in al,61h
-				and al,11111100b
-				out 61h,al
+					koniec:
+				in al,61h ;pobieramy bajt odpowiedzialny za stan głośnika
+				and al,11111100b ;wyłączamy głośnik, 11 na 00
+				out 61h,al ;odsyłamy
 				mov bx,wskaznik
-				mov ax,3E00h
+				mov ax,3E00h ;zamyka plik, którego uchwyt jest w bx
 				int 21h
-				mov ax,4c00h
+				mov ax,4c00h ; <3
 				int	21h
-				wypisz:
+					wypisz:
 				mov ah,09h
 				int 21h
 				ret
-				czytaj_trojki:
+					czytaj_trojki:
 				xor dx,dx
-				mov bx,wskaznik
+				mov bx,wskaznik ;adres pierwszego znaku do bx
 				mov cx,3
-				mov ax,3F00h
+				mov ax,3F00h ;potrzebuje 3 parametry oraz miejsce do zapisu chara (trójki[] - adres 0 w ds), czyta z bx,
+					     ;w cx ile ma czytać charów i o ile przesunąć wskaźnik
 				int 21h
 				ret
-				sprawdz:
+					sprawdz:
 				mov ax,36060 ;C
 				cmp dl,'C'
 				je oktawa
@@ -104,21 +109,21 @@ start:          mov     ax,dane
 				cmp dl,'P'	;Dla pauzy nie dzielimy czestotliwosci oscylatora, czyli dzwiek bedzie nieslyszalny dla czlowieka
 				je oktawa
 				call koniec
-				oktawa:
+					oktawa:
 				mov cl,trojka[1]
-				sub cl,2Fh
-				shr ax,cl
+				sub cl,2Fh ;odejmujemy 29h żeby uzyskać decymalną, nie 30h żeby był wyższy dzwięk
+				shr ax,cl ;dzielimy pierwszą wartość przez drugą
 				xor cx,cx
-				out 42h,al
-				mov al,ah
-				out 42h,al
-				in al,61h
-				or al,00000011b
-				out 61h,al
-				mov cl,trojka[2]
+				out 42h,al ;wysyłamy wartośc al do portu 42h
+				mov al,ah ;ah do al żeby wysłać drugą część liczby
+				out 42h,al ;wysyłamy drugą część liczby do portu 42h
+				in al,61h ;port 61h odpowiada za włączenie i wyłączenie głośnika, pobieramy wartość portu do al
+				or al,00000011b ;włączamy, zmieniamy ostatnie dwa bity z 00 na 11
+				out 61h,al ;odsyłamy
+				mov cl,trojka[2] 
 				sub cl,30h
 				xor dx,dx
-				mov ah,86h
+				mov ah,86h ;bezwarunkowe oczekiwanie przez liczbę mikrosekund z cx i dx
 				int 15h
 				jmp graj
 Progr           ends
